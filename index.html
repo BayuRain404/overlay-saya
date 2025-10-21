@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V.Kita Featured Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="container">
+        <img id="pfp" src="" alt="pfp" style="display:none;">
+        <div class="text-content">
+            <div id="header">
+                <span id="username"></span>
+                <span id="badges"></span>
+            </div>
+            <div id="message"></div>
+            <div id="donation"></div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomID = urlParams.get("session");
+        const password = "false";
+        
+        // Buat iframe tersembunyi untuk koneksi
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://vdo.socialstream.ninja/?ln&password=${password}&salt=vdo.ninja&label=overlay&exclude=${roomID}&scene&novideo&noaudio&cleanoutput&room=${roomID}`;
+        iframe.style.cssText = "width:0px;height:0px;position:fixed;left:-100px;top:-100px;";
+        document.body.appendChild(iframe);
+
+        // 'Telinga' yang mendengarkan chat
+        window.addEventListener("message", function (e) {
+            if (e.source != iframe.contentWindow || !e.data.dataReceived || !e.data.dataReceived.overlayNinja) return;
+            
+            const data = e.data.dataReceived.overlayNinja;
+            
+            // Ambil elemen manekin
+            const container = document.getElementById("container");
+            const pfp = document.getElementById("pfp");
+            const username = document.getElementById("username");
+            const message = document.getElementById("message");
+            const donation = document.getElementById("donation");
+            const badges = document.getElementById("badges");
+
+            // Isi data ke manekin
+            username.innerText = data.chatname || '';
+            message.innerHTML = data.chatmessage || ''; // innerHTML agar emote tampil
+            donation.innerText = data.hasDonation || data.donation || '';
+            
+            // Tampilkan PFP
+            if (data.chatimg) {
+                pfp.src = data.chatimg;
+                pfp.style.display = 'block';
+            } else {
+                pfp.style.display = 'none';
+            }
+            
+            // Atur warna platform
+            container.dataset.source = data.type || 'unknown';
+            
+            // Tampilkan Badges
+            badges.innerHTML = '';
+            if (data.chatbadges) {
+                data.chatbadges.forEach(badge => {
+                    if (typeof badge === "object" && badge.type === "img") {
+                        badges.innerHTML += `<img src='${badge.src}' alt='badge'>`;
+                    } else if (typeof badge === "object" && badge.type === "svg") {
+                        badges.innerHTML += badge.html;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
